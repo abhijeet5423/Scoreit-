@@ -1,5 +1,5 @@
 import React from "react";
-import "./Login.css";
+import "../styles/Login.css";
 import wankhede from '../assets/wankhede bg.jpg';
 import logo from '../assets/logo.png';
 import { useNavigate } from "react-router-dom";
