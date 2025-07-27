@@ -9,6 +9,7 @@ import Navbar from './Components/Navbar'
 import Footer from './Components/Footer'
 import Contact from './Components/Contact'
 import About from './Components/About'
+import Matchsetup from'./Components/Matchsetup'
 
 
 
@@ -26,6 +27,8 @@ function App() {
         <Route path="/teams" element={<Teams />} />*/}
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} /> 
+         <Route path="/matchsetup" element={<Matchsetup />} /> 
+
       </Routes>
       <Footer />
     </>
