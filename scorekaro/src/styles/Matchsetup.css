@@ -1,5 +1,5 @@
 body {
-  background-color: #1E1E1E;
+  background: linear-gradient(to right, #000000, #0f1e3a);
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
   padding: 0;
@@ -39,13 +39,16 @@ h2 {
 
 /* Cards */
 .card {
-  background-color: #2563EB; /* blue like your Figma */
+    background: rgba(255, 255, 255, 0.05); /* blue like your Figma */
   border-radius: 8px;
+  border:2px solid  ;
+  border-color: #fff;
   padding: 14px;
   text-align: center;
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+  height: 150px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .card h3 {
@@ -58,18 +61,15 @@ h2 {
 .card input[type="number"],
 .card select {
   margin-top: 8px;
-  width: 100%;
+  width: 70%;
   padding: 6px 8px;
   border-radius: 6px;
   border: none;
-  background-color: #1E293B;
-  color: #fff;
+  background-color:white;
+  color:black;
 }
 
-.players-section h4 {
-  font-size: 14px;
-  margin: 10px 0 4px 0;
-}
+
 
 /* Options like radio buttons */
 .options {
@@ -80,20 +80,7 @@ h2 {
 }
 
 /* Add Player button */
-.add-player-btn {
-  background-color: #1E40AF;
-  color: #fff;
-  border: none;
-  margin-top: 10px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-}
-.add-player-btn:hover {
-  background-color: #1E3A8A;
-}
+
 
 /* Center image */
 .center-image {

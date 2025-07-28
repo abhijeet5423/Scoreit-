@@ -12,7 +12,7 @@ const Home = () => {
         <div className="home-text">
           <h1 className="home-heading">Let's Bring Your Match to Life!</h1>
           <button className="start-button"  type="button"
-          onClick={() => navigate("/matchsetup")}>Start Match</button>
+          onClick={() => navigate("/teamsetup")}>Start Match</button>
         </div>
       </div>
     </div>

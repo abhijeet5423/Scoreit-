@@ -10,6 +10,7 @@ import Footer from './Components/Footer'
 import Contact from './Components/Contact'
 import About from './Components/About'
 import Matchsetup from'./Components/Matchsetup'
+import Teamsetup from './Components/Teamsetup'
 
 
 
@@ -28,6 +29,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} /> 
          <Route path="/matchsetup" element={<Matchsetup />} /> 
+          <Route path="/teamsetup" element={<Teamsetup />} /> 
 
       </Routes>
       <Footer />
