@@ -1,6 +1,6 @@
 .about-page {
   /* Blue to black gradient background */
-  background: linear-gradient(135deg, #2563eb, #000000);
+  background: linear-gradient(to right, #000000, #0f1e3a);
   min-height: 100vh;
   padding: 40px 20px;
 

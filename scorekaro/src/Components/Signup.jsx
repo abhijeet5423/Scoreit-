@@ -22,7 +22,7 @@ const Signup = () => {
         <button type="button"  onClick={() => navigate("/")}
           >Existing user LogIn </button>
       </form>
-    </div>
+    </div> 
   );
 };
 

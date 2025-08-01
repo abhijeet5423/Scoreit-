@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/MatchSetup.css";
 import b from "../assets/b.png";
 
 const MatchSetup = () => {
+ const navigate = useNavigate();
   const [matchDetails, setMatchDetails] = useState({
     overs: "",
     customOvers: "",
@@ -189,7 +191,7 @@ const MatchSetup = () => {
         </div>
       </div>
 
-      <button className="submit-btn" onClick={handleSubmit}>
+      <button className="submit-btn" onClick={() => navigate("/Scoring") }  >
        Start Match
       </button>
     </div>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import '../styles/Navbar.css' // ✅ Import the CSS file
+import '../styles/Navbar.css' 
 import ThemeToggle from './ThemeToggle'
 
 const Navbar = () => {
@@ -11,7 +11,7 @@ const Navbar = () => {
       <div className="navbar-links">
         <Link to="/home" className="nav-link">Home</Link>
         <Link to="/matches" className="nav-link">Matches</Link>
-        <Link to="/teams" className="nav-link">Teams</Link>
+        <Link to="/teammanage" className="nav-link">Teams</Link>
         <Link to="/about" className="nav-link">About</Link>
         <Link to="/contact" className="nav-link">Contact</Link>
       </div>

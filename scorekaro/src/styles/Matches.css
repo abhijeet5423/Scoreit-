@@ -1,0 +1,64 @@
+.matches-page-container-temp {
+  padding: 20px;
+  margin: 60px;
+ background: linear-gradient(to right, #000000, #0f1e3a);
+}
+
+.matches-page-title-temp {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 26px;
+  color: white;
+}
+
+.matches-card-grid-temp {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  justify-items: center;
+}
+
+.matches-card-temp {
+ 
+  border: 2px solid #ccc;
+  border-radius: 15px;
+  padding: 20px;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.matches-card-temp:hover {
+  transform: scale(1.05);
+}
+
+.matches-summary-temp {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color:whitesmoke;
+}
+
+.matches-scorecard-temp {
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 10px;
+}
+
+.view-scorecard-btn-temp {
+  padding: 8px 14px;
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.view-scorecard-btn-temp:hover {
+  background-color: #005fa3;
+}
