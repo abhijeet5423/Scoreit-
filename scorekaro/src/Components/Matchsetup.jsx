@@ -1,10 +1,18 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import "../styles/MatchSetup.css";
 import b from "../assets/b.png";
+import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
+import BackButton from "./BackButton";
 
 const MatchSetup = () => {
- const navigate = useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // team data coming from TeamSetup
+  const teamData = location.state || {};
+  const { teamAName = "Team A", teamBName = "Team B" } = teamData;
+
   const [matchDetails, setMatchDetails] = useState({
     overs: "",
     customOvers: "",
@@ -20,31 +28,54 @@ const MatchSetup = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setMatchDetails((prev) => ({ ...prev, [name]: value }));
+
+    setMatchDetails((prev) => {
+      let updated = { ...prev, [name]: value };
+      if (name === "umpire2" && value.trim() === "") {
+        updated.umpire3 = ""; // auto-clear if umpire2 removed
+      }
+      return updated;
+    });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const oversValue =
       matchDetails.overs === "Custom"
-        ? matchDetails.customOvers
-        : matchDetails.overs;
+        ? Number(matchDetails.customOvers)
+        : matchDetails.overs === "Test"
+        ? "Test"
+        : Number(matchDetails.overs);
 
-    const finalData = {
+    const matchData = {
       overs: oversValue,
-      venue: matchDetails.venue,
+      venue: matchDetails.venue.trim(),
       ballType: matchDetails.ballType,
       matchType: matchDetails.matchType,
-      umpire1: matchDetails.umpire1,
-      umpire2: matchDetails.umpire2,
-      umpire3: matchDetails.umpire3,
-      tossWinner: matchDetails.tossWinner,
+      umpireName1: matchDetails.umpire1.trim(),
+      umpireName2: matchDetails.umpire2.trim(),
+      umpireName3: matchDetails.umpire3.trim(),
+      tossWonBy: matchDetails.tossWinner,
       tossDecision: matchDetails.tossDecision,
     };
 
-    console.log("Match Setup:", finalData);
-    alert("Match setup saved! Check console for data.");
+    // ✅ merge team setup + match setup
+    const finalData = { ...teamData, ...matchData };
+
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/match-setup/save",
+        finalData
+      );
+      alert(res.data.message || "Match setup saved!");
+
+      // ✅ pass everything to ScoringPage
+      navigate("/match", { state: finalData });
+    } catch (error) {
+      console.error("Error saving match setup:", error);
+      alert("Failed to save match setup. Please try again.");
+    }
   };
 
   return (
@@ -171,13 +202,16 @@ const MatchSetup = () => {
           {/* Toss Section */}
           <div className="card">
             <h3>Toss</h3>
-            <input
-              type="text"
+            <select
               name="tossWinner"
-              placeholder="Who won the toss?"
               value={matchDetails.tossWinner}
               onChange={handleChange}
-            />
+            >
+              <option value="">Select Toss Winner</option>
+              <option value={teamAName}>{teamAName}</option>
+              <option value={teamBName}>{teamBName}</option>
+            </select>
+
             <select
               name="tossDecision"
               value={matchDetails.tossDecision}
@@ -191,8 +225,12 @@ const MatchSetup = () => {
         </div>
       </div>
 
-      <button className="submit-btn" onClick={() => navigate("/Scoring") }  >
-       Start Match
+      <div className="back-btn">
+        <BackButton />
+      </div>
+
+      <button className="submit-btn" onClick={handleSubmit}>
+        Start Scoring
       </button>
     </div>
   );

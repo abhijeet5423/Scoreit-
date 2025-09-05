@@ -1,51 +1,63 @@
-import React from "react";
-import "../styles/Matches.css"; // Temporary CSS import, replace when integrating backend
-
-const matches = [
-  {
-    id: 1,
-    teamA: "Warriors",
-    teamB: "Titans",
-    winner: "Warriors",
-    by: "6 wickets",
-    score: "Warriors: 145/4, Titans: 144 all out"
-  },
-  {
-    id: 2,
-    teamA: "Strikers",
-    teamB: "Blasters",
-    winner: "Blasters",
-    by: "15 runs",
-    score: "Strikers: 170/8, Blasters: 185/6"
-  },
-  {
-    id: 3,
-    teamA: "Riders",
-    teamB: "Kings",
-    winner: "Kings",
-    by: "2 wickets",
-    score: "Riders: 132/9, Kings: 135/8"
-  }
-];
+import React, { useEffect, useState } from 'react';
 
 const Matches = () => {
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/match-details');
+        if (!response.ok) throw new Error('Failed to fetch matches');
+        const data = await response.json();
+        setMatches(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMatches();
+  }, []);
+
   return (
-    <div className="matches-page-container-temp"> {/* Replace with: className="matches-page-container" */}
-      <h2 className="matches-page-title-temp">Past Matches</h2> {/* Replace with: className="matches-page-title" */}
-      <div className="matches-card-grid-temp"> {/* Replace with: className="matches-card-grid" */}
-        {matches.map((match) => (
-          <div className="matches-card-temp" key={match.id}> {/* Replace with: className="matches-card" */}
-            <p className="matches-summary-temp">
-              {match.winner} won the match by {match.by}
-            </p>
-            <div className="matches-scorecard-temp">
-              <strong>Scorecard:</strong>
-              <p>{match.score}</p>
+    <div style={{ padding: '20px' }}>
+      <h2>Past Matches</h2>
+      {loading ? (
+        <p>Loading...</p>
+      ) : matches.length === 0 ? (
+        <p>No past matches found.</p>
+      ) : (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+          {matches.map(match => (
+            <div
+              key={match._id}
+              style={{
+                background: '#f4f4f4',
+                borderRadius: '8px',
+                padding: '18px 20px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                minWidth: '260px'
+              }}
+            >
+              <div style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8 }}>
+                {match.teamAName} vs {match.teamBName}
+              </div>
+              <div>
+                <b>{match.teamAName}:</b> {match.teamAScore !== undefined ? match.teamAScore : 'N/A'}
+              </div>
+              <div>
+                <b>{match.teamBName}:</b> {match.teamBScore !== undefined ? match.teamBScore : 'N/A'}
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <span style={{ fontWeight: 500, color: '#177d44' }}>
+                  Winner: {match.winnerName || 'N/A'}
+                </span>
+              </div>
             </div>
-            <button className="view-scorecard-btn-temp">View Full Scorecard</button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

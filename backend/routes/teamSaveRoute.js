@@ -2,15 +2,15 @@ const express = require('express');
 const router = express.Router();
 const TeamSave = require('../models/TeamSave');
 
-
-router.get('/', async (req, res) => {
+router.post('/save', async (req, res) => {
   try {
-    const teams = await TeamSave.find();
-    res.status(200).json(teams);
+    const { teamName, teamPlayers } = req.body;
+    const newTeam = new TeamSave({ teamName, teamPlayers });
+    await newTeam.save();
+    res.status(201).json(newTeam);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 module.exports = router;
-

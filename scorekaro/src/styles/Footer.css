@@ -1,10 +1,10 @@
 .footer-main {
   /* background-color: #0f172a; dark slate */
   background: linear-gradient(135deg, #0953a7, #01194d);
-
+height: 3.5rem;
 border-radius: 10px;
   color: white;
-  padding: 20px;
+  padding: 30px;
   text-align: center;
 }
 
@@ -13,11 +13,13 @@ border-radius: 10px;
   justify-content: center;
   margin-top: 10px;
   gap: 15px;
+  
 }
 
 .media-icons a {
   color: white;
   transition: color 0.3s ease;
+;
 }
 
 .media-icons a:hover {

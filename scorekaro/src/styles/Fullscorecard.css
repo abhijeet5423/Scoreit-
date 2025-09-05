@@ -1,0 +1,116 @@
+/* Wrapper for the entire page */
+.fullscorecard-wrapper {
+  padding: 30px 20px;
+  background: #0b1e2d; /* dark bluish background */
+  min-height: 100vh;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Page title */
+.scorecard-title {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 28px;
+  color: #ffffff;
+  text-shadow: 1px 1px 4px #2ac8ff;
+}
+
+/* Flex layout for cards */
+.scorecard-flex {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* Team cards */
+.team-card {
+  flex: 1 1 45%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(42, 200, 255, 0.2);
+  transition: transform 0.3s;
+}
+
+.team-card:hover {
+  transform: scale(1.02);
+}
+
+/* Card header with team name + expand button */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+/* Expand button */
+.expand-btn {
+  background-color: #2ac8ff;
+  color: black;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.expand-btn:hover {
+  background-color: #1ca4d7;
+}
+
+/* Score section (batting/bowling) */
+.score-section {
+  margin-bottom: 25px;
+}
+
+.score-section h4 {
+  margin-bottom: 10px;
+  color: #ffffff;
+  border-bottom: 1px solid #2ac8ff;
+  padding-bottom: 4px;
+}
+
+/* Tables inside cards */
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.stats-table th,
+.stats-table td {
+  border: 1px solid #2ac8ff;
+  padding: 10px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.stats-table th {
+  background-color: #1b3b52;
+  font-weight: bold;
+}
+
+.stats-table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.stats-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .scorecard-flex {
+    flex-direction: column;
+  }
+
+  .team-card {
+    flex: 1 1 100%;
+  }
+}

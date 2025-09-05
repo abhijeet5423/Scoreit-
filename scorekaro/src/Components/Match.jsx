@@ -1,431 +1,313 @@
-
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/Match.css";
-
-// --- Utility Creators ---
-const getDefaultBatsmen = () =>
-  Array.from({ length: 11 }, (_, i) => ({
-    name: `batsman${i + 1}`,
-    runs: 0,
-    balls: 0,
-  }));
-
-const getDefaultBowlers = () =>
-  Array.from({ length: 11 }, (_, i) => ({
-    name: `bowler${i + 1}`,
-    runs: 0,
-    balls: 0,
-    wickets: 0,
-  }));
 
 const Match = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // ---- Team/Match State ----
-  const [teamAName] = useState("Team A");
-  const [teamBName] = useState("Team B");
-  const [venueName] = useState("Stadium Name");
-  const [currentBattingTeam] = useState("Team A");
+  const {
+    teamAName = "Team A",
+    teamBName = "Team B",
+    teamAPlayers = [],
+    teamBPlayers = [],
+    venue = "Stadium",
+    tossWonBy,
+    tossDecision,
+    overs = 5,
+  } = location.state || {};
 
-  // ---- Score State ----
-  const [currentBattingTeamScore, setCurrentBattingTeamScore] = useState(0);
-  const [currentWicketCount, setCurrentWicketCount] = useState(0);
-  const [ballsCount, setBallsCount] = useState(0);
+  const [currentBattingTeam, setCurrentBattingTeam] = useState(
+    tossDecision === "Bat"
+      ? tossWonBy
+      : tossWonBy === teamAName
+      ? teamBName
+      : teamAName
+  );
 
-  // ---- Batting ----
-  const [batsmen, setBatsmen] = useState(getDefaultBatsmen());
-  const [onStrikeIdx, setOnStrikeIdx] = useState(0);
-  const [offStrikeIdx, setOffStrikeIdx] = useState(1);
-  const [nextBatsmanNum, setNextBatsmanNum] = useState(2);
-  const [showBatsmanDropdown, setShowBatsmanDropdown] = useState(false);
-  const [selectedNextBatsmanIdx, setSelectedNextBatsmanIdx] = useState(null);
+  const [score, setScore] = useState(0);
+  const [wickets, setWickets] = useState(0);
+  const [balls, setBalls] = useState(0);
+  const [commentary, setCommentary] = useState([]);
+  const commentaryRef = useRef(null);
 
-  // ---- Bowling ----
-  const [bowlers, setBowlers] = useState(getDefaultBowlers());
-  const [currentBowlerIdx, setCurrentBowlerIdx] = useState(0);
-  const [showBowlerDropdown, setShowBowlerDropdown] = useState(false);
-  const [selectedNextBowlerIdx, setSelectedNextBowlerIdx] = useState(null);
+  const maxBalls = overs * 6;
 
-  // ---- Extras ----
-  const [extraType, setExtraType] = useState(null);
-  const [extraRun, setExtraRun] = useState(1);
+  const [playingBatsmen, setPlayingBatsmen] = useState([]);
+  const [playingBowler, setPlayingBowler] = useState(null);
 
-  // ---- History ----
-  const [ballHistory, setBallHistory] = useState([]);
+  const [availableBatsmen, setAvailableBatsmen] = useState(
+    currentBattingTeam === teamAName ? [...teamAPlayers] : [...teamBPlayers]
+  );
+  const [availableBowler, setAvailableBowler] = useState(
+    currentBattingTeam === teamAName ? [...teamBPlayers] : [...teamAPlayers]
+  );
 
-  // Over Display
-  const oversDisplay = `${Math.floor(ballsCount / 6)}.${ballsCount % 6}`;
+  const [selectedBatsman, setSelectedBatsman] = useState("");
+  const [selectedBowler, setSelectedBowler] = useState("");
 
-  // --- Snapshot: for undo ---
-  const getSnapshot = () => ({
-    currentBattingTeamScore,
-    currentWicketCount,
-    ballsCount,
-    batsmen: JSON.parse(JSON.stringify(batsmen)),
-    onStrikeIdx,
-    offStrikeIdx,
-    nextBatsmanNum,
-    bowlers: JSON.parse(JSON.stringify(bowlers)),
-    currentBowlerIdx,
-    showBatsmanDropdown,
-    showBowlerDropdown,
-  });
-  const restoreSnapshot = snap => {
-    setCurrentBattingTeamScore(snap.currentBattingTeamScore);
-    setCurrentWicketCount(snap.currentWicketCount);
-    setBallsCount(snap.ballsCount);
-    setBatsmen(snap.batsmen);
-    setOnStrikeIdx(snap.onStrikeIdx);
-    setOffStrikeIdx(snap.offStrikeIdx);
-    setNextBatsmanNum(snap.nextBatsmanNum);
-    setBowlers(snap.bowlers);
-    setCurrentBowlerIdx(snap.currentBowlerIdx);
-    setShowBatsmanDropdown(snap.showBatsmanDropdown);
-    setShowBowlerDropdown(snap.showBowlerDropdown);
-  };
+  const [showBatsmanBtn, setShowBatsmanBtn] = useState(true);
+  const [showBowlerBtn, setShowBowlerBtn] = useState(true);
 
-  // --- Bat/Bowl Updating Helpers ---
-  const addBatStats = (idx, runs, balls = 1) => {
-    setBatsmen(bs =>
-      bs.map((b, i) =>
-        i === idx ? { ...b, runs: b.runs + runs, balls: b.balls + balls } : b
-      )
-    );
-  };
-  const addBowlerStats = (idx, runs, balls = 1, wickets = 0) => {
-    setBowlers(bw =>
-      bw.map((b, i) =>
-        i === idx
-          ? {
-              ...b,
-              runs: b.runs + runs,
-              balls: b.balls + balls,
-              wickets: b.wickets + wickets,
-            }
-          : b
-      )
-    );
-  };
+  const [extraRunsInput, setExtraRunsInput] = useState(null);
+  const [history, setHistory] = useState([]);
 
-  // --- Strike Swapper ---
-  const swapStrike = () => {
-    setOnStrikeIdx(nowOn => {
-      setOffStrikeIdx(nowOn);
-      return offStrikeIdx;
-    });
-  };
+  // Bowler stats
+  const [bowlerStats, setBowlerStats] = useState({ overs: 0, balls: 0, wickets: 0 });
 
-  // --- Legal Ball Played (inc balls, check over, open bowler select) ---
-  const legalBallPlayed = () => {
-    setBallsCount(prev => {
-      const newBalls = prev + 1;
-      if (newBalls % 6 === 0) setShowBowlerDropdown(true);
-      return newBalls;
-    });
-  };
-
-  // --- Runs, Wicket, Extras Handlers ---
-  function handleRun(runs) {
-    const snapshot = getSnapshot();
-    const ballNum = `${Math.floor(ballsCount / 6)}.${ballsCount % 6 + 1}`;
-    let commentary =
-      runs === 4
-        ? `${ballNum} - FOUR by ${batsmen[onStrikeIdx].name}`
-        : runs === 6
-        ? `${ballNum} - SIX by ${batsmen[onStrikeIdx].name}`
-        : `${ballNum} - ${runs} run${runs > 1 ? "s" : ""} by ${
-            batsmen[onStrikeIdx].name
-          }`;
-    setCurrentBattingTeamScore(s => s + runs);
-    addBatStats(onStrikeIdx, runs, 1);
-    addBowlerStats(currentBowlerIdx, runs, 1);
-    setBallHistory(prev => [
-      ...prev,
-      { type: "run", value: runs, snapshot, log: commentary },
-    ]);
-    legalBallPlayed();
-    if (runs % 2 === 1) swapStrike();
-  }
-
-  function handleWicket() {
-    const snapshot = getSnapshot();
-    const ballNum = `${Math.floor(ballsCount / 6)}.${ballsCount % 6 + 1}`;
-    const commentary = `${ballNum} - WICKET! ${
-      batsmen[onStrikeIdx].name
-    } OUT, bowled by ${bowlers[currentBowlerIdx].name}`;
-    setCurrentWicketCount(w => w + 1);
-    addBowlerStats(currentBowlerIdx, 0, 1, 1);
-    setBallHistory(prev => [
-      ...prev,
-      { type: "wicket", snapshot, log: commentary },
-    ]);
-    legalBallPlayed();
-    setShowBatsmanDropdown(true);
-    setSelectedNextBatsmanIdx(null);
-  }
-
-  function handleExtraType(type) {
-    setExtraType(type);
-    setExtraRun(1);
-  }
-  function submitExtraRun() {
-    if (!extraType) return;
-    const snapshot = getSnapshot();
-    const desc = { nb: "NO BALL", wide: "WIDE", bye: "BYE", lb: "LEG BYE" }[extraType];
-    const ballNum = `${Math.floor(ballsCount / 6)}.${ballsCount % 6 + 1}`;
-    setCurrentBattingTeamScore(s => s + extraRun);
-    addBowlerStats(
-      currentBowlerIdx,
-      extraRun,
-      extraType === "bye" || extraType === "lb" ? 1 : 0
-    );
-    setBallHistory(prev => [
+  const saveHistory = () => {
+    setHistory((prev) => [
       ...prev,
       {
-        type: "extra",
-        value: extraRun,
-        subtype: extraType,
-        snapshot,
-        log: `${ballNum} - ${desc} + ${extraRun - 1}`,
+        score,
+        wickets,
+        balls,
+        commentary: [...commentary],
+        playingBatsmen: JSON.parse(JSON.stringify(playingBatsmen)),
+        playingBowler,
+        extraRunsInput,
+        availableBatsmen: [...availableBatsmen],
+        availableBowler: [...availableBowler],
+        showBatsmanBtn,
+        showBowlerBtn,
+        bowlerStats: { ...bowlerStats },
       },
     ]);
-    setExtraType(null);
-    setExtraRun(1);
-    if (extraType === "bye" || extraType === "lb") legalBallPlayed();
-  }
-
-  // --- Undo Handler ---
-  function handleUndo() {
-    if (ballHistory.length === 0) return;
-    const last = ballHistory[ballHistory.length - 1];
-    if (last && last.snapshot) restoreSnapshot(last.snapshot);
-    setBallHistory(hist => hist.slice(0, -1));
-  }
-
-  // --- Bowler/Batsman Dropdowns ---
-  const selectNextBowler = e => setSelectedNextBowlerIdx(Number(e.target.value));
-  const submitNextBowler = () => {
-    if (selectedNextBowlerIdx !== null) {
-      const snapshot = getSnapshot();
-      setBallHistory(prev => [
-        ...prev,
-        {
-          type: "bowlerChange",
-          snapshot,
-          log: `New Bowler: ${bowlers[selectedNextBowlerIdx].name}`,
-        },
-      ]);
-      setCurrentBowlerIdx(selectedNextBowlerIdx);
-      setShowBowlerDropdown(false);
-      setSelectedNextBowlerIdx(null);
-    }
   };
 
-  const selectNextBatsman = e =>
-    setSelectedNextBatsmanIdx(Number(e.target.value));
-  const submitNextBatsman = () => {
-    if (selectedNextBatsmanIdx !== null) {
-      const snapshot = getSnapshot();
-      setBallHistory(prev => [
-        ...prev,
-        {
-          type: "batsmanChange",
-          snapshot,
-          log: `New Batsman: ${batsmen[selectedNextBatsmanIdx].name} to crease`,
-        },
-      ]);
-      setOnStrikeIdx(selectedNextBatsmanIdx);
-      setNextBatsmanNum(n => n + 1);
-      setShowBatsmanDropdown(false);
-      setSelectedNextBatsmanIdx(null);
-    }
+  const addBatsman = () => {
+    if (!selectedBatsman) return;
+    saveHistory();
+    const newBat = availableBatsmen.find((b) => b === selectedBatsman);
+    setPlayingBatsmen((prev) => [...prev, { name: newBat, runs: 0, balls: 0 }]);
+    setAvailableBatsmen((prev) => prev.filter((b) => b !== selectedBatsman));
+    setSelectedBatsman("");
+    setShowBatsmanBtn(false);
+    addCommentary(`${newBat} comes to bat!`);
   };
 
-  // --- End of Innings ---
-  useEffect(() => {
-    if (currentWicketCount === 10 || ballsCount === 120) {
-      navigate("/inning-summary", {
-        state: {
-          score: currentBattingTeamScore,
-          wickets: currentWicketCount,
-          overs: `${Math.floor(ballsCount / 6)}.${ballsCount % 6}`,
-        },
+  const addBowler = () => {
+    if (!selectedBowler) return;
+    saveHistory();
+    setPlayingBowler(selectedBowler);
+    setAvailableBowler((prev) => prev.filter((b) => b !== selectedBowler));
+    setSelectedBowler("");
+    setShowBowlerBtn(false);
+    setBowlerStats({ overs: 0, balls: 0, wickets: 0 });
+    addCommentary(`${selectedBowler} starts bowling!`);
+  };
+
+  const addCommentary = (text) => {
+    setCommentary((prev) => [...prev, text]);
+  };
+
+  const swapStrike = () => {
+    setPlayingBatsmen((prev) => {
+      if (prev.length < 2) return prev;
+      const newBatsmen = [...prev];
+      [newBatsmen[0], newBatsmen[1]] = [newBatsmen[1], newBatsmen[0]];
+      return newBatsmen;
+    });
+  };
+
+  const updateScore = (runs = 0, type = "runs") => {
+    if (balls >= maxBalls || wickets >= 10) return;
+    saveHistory();
+
+    if (type !== "runs") {
+      setExtraRunsInput({ type, runs: 1 });
+      return;
+    }
+
+    setScore((prev) => prev + runs);
+    setBalls((prev) => prev + 1);
+
+    // Update striker runs and balls
+    setPlayingBatsmen((prev) => {
+      const updated = [...prev];
+      if (updated[0]) {
+        updated[0].runs += runs;
+        updated[0].balls += 1;
+      }
+      return updated;
+    });
+
+    // Update bowler stats
+    setBowlerStats((prev) => {
+      let b = prev.balls + 1;
+      let o = prev.overs;
+      if (b === 6) {
+        o += 1;
+        b = 0;
+        swapStrike(); // swap strike at end of over
+        setShowBowlerBtn(true); // new bowler can be added
+      }
+      return { ...prev, overs: o, balls: b };
+    });
+
+    addCommentary(`${runs} run(s)`);
+
+    if (runs % 2 !== 0) swapStrike();
+  };
+
+  const confirmExtraRuns = () => {
+    if (!extraRunsInput) return;
+    saveHistory();
+    const extra = Number(extraRunsInput.runs) || 0;
+    const type = extraRunsInput.type;
+
+    setScore((prev) => prev + extra);
+
+    if (type === "Bye") {
+      setBalls((prev) => prev + 1);
+      setBowlerStats((prev) => {
+        let b = prev.balls + 1;
+        let o = prev.overs;
+        if (b === 6) {
+          o += 1;
+          b = 0;
+          swapStrike();
+          setShowBowlerBtn(true);
+        }
+        return { ...prev, overs: o, balls: b };
       });
     }
-  }, [currentWicketCount, ballsCount, navigate, currentBattingTeamScore]);
 
-  // --- Render ---
+    addCommentary(`${extra} extra run(s) for ${type}`);
+    setExtraRunsInput(null);
+
+    if (extra % 2 !== 0) swapStrike();
+  };
+
+  const updateWicket = () => {
+    if (balls >= maxBalls || wickets >= 10) return;
+    saveHistory();
+
+    setWickets((prev) => prev + 1);
+    setBalls((prev) => prev + 1);
+
+    setPlayingBatsmen((prev) => prev.slice(1));
+    addCommentary("Wicket!");
+
+    setBowlerStats((prev) => ({ ...prev, wickets: prev.wickets + 1 }));
+    setShowBatsmanBtn(true);
+
+    swapStrike();
+  };
+
+  const undo = () => {
+    const last = history.pop();
+    if (!last) return;
+    setScore(last.score);
+    setWickets(last.wickets);
+    setBalls(last.balls);
+    setCommentary(last.commentary);
+    setPlayingBatsmen(last.playingBatsmen);
+    setPlayingBowler(last.playingBowler);
+    setExtraRunsInput(last.extraRunsInput);
+    setAvailableBatsmen(last.availableBatsmen);
+    setAvailableBowler(last.availableBowler);
+    setShowBatsmanBtn(last.showBatsmanBtn);
+    setShowBowlerBtn(last.showBowlerBtn);
+    setBowlerStats(last.bowlerStats);
+    setHistory([...history]);
+  };
+
+  useEffect(() => {
+    if (commentaryRef.current) commentaryRef.current.scrollTop = commentaryRef.current.scrollHeight;
+  }, [commentary]);
+
+  useEffect(() => {
+    if (balls >= maxBalls || wickets >= 10) {
+      addCommentary("Innings Ended!");
+      alert("Innings Ended!");
+    }
+  }, [balls, wickets, maxBalls]);
+
+  useEffect(() => {
+    if (playingBatsmen.length < 2 && availableBatsmen.length > 0) setShowBatsmanBtn(true);
+    if (!playingBowler && availableBowler.length > 0) setShowBowlerBtn(true);
+  }, [playingBatsmen, playingBowler, availableBatsmen, availableBowler]);
+
   return (
     <div className="match-container">
-      <div className="match-header">
-        <h2>
-          {teamAName} vs {teamBName}
-        </h2>
-        <span>{venueName}</span>
+      <div className="info-box match-info">
+        <h2>{teamAName} vs {teamBName}</h2>
+        <p>Venue: {venue}</p>
+        <p>Batting First: <b>{currentBattingTeam}</b></p>
+        <h3>{currentBattingTeam}: {score}/{wickets}</h3>
+        <p>Overs: {bowlerStats.overs}.{bowlerStats.balls} / {overs}</p>
       </div>
 
-      {/* ---- Scoreboard ---- */}
-      <div className="score-info">
-        <div className="team-score">
-          <h3>{currentBattingTeam}</h3>
-          <span style={{ fontSize: "2rem", fontWeight: "bold" }}>
-            {currentBattingTeamScore}-{currentWicketCount}
-          </span>
-          <span style={{ fontSize: "1.1rem" }}>Overs: {oversDisplay}</span>
-        </div>
-        <div className="batsmen">
-          <div>
-            <b>{batsmen[onStrikeIdx].name}*</b>{" "}
-            <span>
-              {batsmen[onStrikeIdx].runs} ({batsmen[onStrikeIdx].balls})
-            </span>
-          </div>
-          <div>
-            <b>{batsmen[offStrikeIdx].name}</b>{" "}
-            <span>
-              {batsmen[offStrikeIdx].runs} ({batsmen[offStrikeIdx].balls})
-            </span>
-          </div>
-        </div>
-        <div className="bowler">
-          <span>
-            <b>Bowler:</b> {bowlers[currentBowlerIdx].name}
-          </span>
-          <br />
-          <span>
-            Overs: {Math.floor(bowlers[currentBowlerIdx].balls / 6)}.
-            {bowlers[currentBowlerIdx].balls % 6} | Runs:{" "}
-            {bowlers[currentBowlerIdx].runs} | Wickets:{" "}
-            {bowlers[currentBowlerIdx].wickets}
-          </span>
-        </div>
-      </div>
-
-      {/* --- CONTROLS GRID --- */}
-      <div class="grid-wrapper">
-      <div className="buttons-grid">
-        {[0,1, 2, 3, 4, 6].map(run => (
-          <button
-            key={run}
-            onClick={() => handleRun(run)}
-            className="run-btn"
-            aria-label={`Add ${run} run${run > 1 ? "s" : ""}`}
-          >
-            {run}
-          </button>
-        ))}
-        <button className="wicket" onClick={handleWicket}>
-          WICKET
-        </button>
-        {["nb", "wide", "bye", "lb"].map(type => (
-          <button
-            key={type}
-            onClick={() => handleExtraType(type)}
-            className={`${type}`}
-            aria-label={type.toUpperCase()}
-          >
-            {type.toUpperCase()}
-          </button>
-        ))}
-        <button className="undo" onClick={handleUndo}>
-          Undo
-        </button>
-      </div></div>
-
-      {/* ---- EXTRAS SECTION ---- */}
-      {extraType && (
-        <div className="extra-run-box">
-          <label>
-            Runs on {extraType.toUpperCase()} (incl. default 1):{" "}
-            <select
-              value={extraRun}
-              onChange={e => setExtraRun(Number(e.target.value))}
-            >
-              {[0, 1, 2, 3, 4, 5, 6, 7].map(v => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button onClick={submitExtraRun}>Submit</button>
-          <button className="cancel-btn" onClick={() => setExtraType(null)}>
-            Cancel
-          </button>
-        </div>
-      )}
-
-      {/* ---- BOWLER/BATSMAN DROPDOWNS ---- */}
-      {showBowlerDropdown && (
-        <div className="bowler-select-box">
-          <label>
-            Select Next Bowler:&nbsp;
-            <select
-              onChange={selectNextBowler}
-              value={selectedNextBowlerIdx ?? currentBowlerIdx}
-            >
-              {bowlers.map((b, idx) => (
-                <option key={idx} value={idx}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={submitNextBowler}
-              disabled={selectedNextBowlerIdx === null}
-            >
-              Submit
-            </button>
-          </label>
-        </div>
-      )}
-
-      {showBatsmanDropdown && (
-        <div className="batsman-select-box">
-          <label>
-            Select Next Batsman:&nbsp;
-            <select
-              onChange={selectNextBatsman}
-              value={selectedNextBatsmanIdx ?? ""}
-            >
-              <option value="" disabled>
-                Select
-              </option>
-              {batsmen.map(
-                (bat, idx) =>
-                  idx >= nextBatsmanNum && (
-                    <option key={idx} value={idx}>
-                      {bat.name}
-                    </option>
-                  )
-              )}
-            </select>
-            <button
-              onClick={submitNextBatsman}
-              disabled={selectedNextBatsmanIdx === null}
-            >
-              Submit
-            </button>
-          </label>
-        </div>
-      )}
-      <button className="match-summary-button" onClick={() => navigate("/inningSummary")}>
-  Go to Inning Summary
-</button>
-
-
-      {/* ---- BALL LOG ---- */}
-      <div className="ball-log">
-        <h3>Ball-by-ball log</h3>
-        <ul>
-          {ballHistory.map((entry, idx) => (
-            <li key={idx}>{entry.log}</li>
+      <div className="grid-container">
+        <div className="info-box batsmen-info">
+          <h3>Current Batsmen</h3>
+          {playingBatsmen.map((b, idx) => (
+            <p key={idx}>🏏 {b.name}: {b.runs} ({b.balls} balls)</p>
           ))}
+          {showBatsmanBtn && availableBatsmen.length > 0 && (
+            <>
+              <select value={selectedBatsman} onChange={(e) => setSelectedBatsman(e.target.value)}>
+                <option value="">Select Batsman</option>
+                {availableBatsmen.map((b) => <option key={b} value={b}>{b}</option>)}
+              </select>
+              <button onClick={addBatsman}>Add Batsman</button>
+            </>
+          )}
+        </div>
+
+        <div className="info-box bowler-info">
+          <h3>Current Bowler</h3>
+          {playingBowler && (
+            <p>🎯 {playingBowler} | Overs: {bowlerStats.overs}.{bowlerStats.balls} | Wickets: {bowlerStats.wickets}</p>
+          )}
+          {showBowlerBtn && availableBowler.length > 0 && (
+            <>
+              <select value={selectedBowler} onChange={(e) => setSelectedBowler(e.target.value)}>
+                <option value="">Select Bowler</option>
+                {availableBowler.map((b) => <option key={b} value={b}>{b}</option>)}
+              </select>
+              <button onClick={addBowler}>Add Bowler</button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="scoring-tray">
+        <h3>Scoring Tray</h3>
+        <div className="button-grid">
+          <button onClick={() => updateScore(0)}>0</button>
+          <button onClick={() => updateScore(1)}>1</button>
+          <button onClick={() => updateScore(2)}>2</button>
+          <button onClick={() => updateScore(3)}>3</button>
+          <button onClick={() => updateScore(4)}>4</button>
+          <button onClick={() => updateScore(6)}>6</button>
+          <button className="wicket-btn" onClick={updateWicket}>Wicket</button>
+          <button onClick={() => updateScore(1, "Wide")}>Wide</button>
+          <button onClick={() => updateScore(1, "No Ball")}>No Ball</button>
+          <button onClick={() => updateScore(1, "Bye")}>Bye</button>
+          <button className="undo-btn" onClick={undo}>Undo</button>
+        </div>
+
+        {extraRunsInput && (
+          <div className="extra-runs-input">
+            <p>Enter extra runs for {extraRunsInput.type}:</p>
+            <input
+              type="number"
+              value={extraRunsInput.runs}
+              onChange={(e) => setExtraRunsInput({ ...extraRunsInput, runs: e.target.value })}
+            />
+            <button onClick={confirmExtraRuns}>Confirm</button>
+          </div>
+        )}
+      </div>
+
+      <div className="commentary-box" ref={commentaryRef}>
+        <h3>Commentary</h3>
+        <ul>
+          {commentary.map((c, idx) => <li key={idx}>{c}</li>)}
         </ul>
       </div>
-
-      
     </div>
   );
 };

@@ -11,10 +11,11 @@ import Contact from './Components/Contact'
 import About from './Components/About'
 import Matchsetup from'./Components/Matchsetup'
 import Teamsetup from './Components/Teamsetup'
-import Scoring from './Components/Match';
+import Match from './Components/Match';
 import InningSummary from './Components/InningSummary'
 import TeamManage from './Components/TeamManage';
 import Matches from './Components/Matches';
+import FullScorecard from './Components/Fullscorecard';
 
 
 function App() {
@@ -33,10 +34,11 @@ function App() {
         <Route path="/contact" element={<Contact />} /> 
          <Route path="/matchsetup" element={<Matchsetup />} /> 
           <Route path="/teamsetup" element={<Teamsetup />} /> 
-          <Route path="/scoring" element={<Scoring />} /> 
+          <Route path="/match" element={<Match />} /> 
           <Route path="/inningSummary" element={<InningSummary />} /> 
            <Route path="/inningSummary" element={<InningSummary />} /> 
-        <Route path="/teammanage" element={<TeamManage />} />
+        <Route path="/teammanage" element={<TeamManage />} /> 
+        <Route path="/fullscorecard" element={<FullScorecard />} /> 
 
       </Routes>
       <Footer />

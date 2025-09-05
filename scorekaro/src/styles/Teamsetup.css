@@ -36,14 +36,16 @@
 
 .players-section {
   margin-top: 10px;
+ 
+  
 }
 
 .players-section h4 {
   margin-bottom: 10px;
 }
 
-.players-section button {
-  margin-top: 10px;
+.players-section :is(button) {
+  margin: 6px;
   padding: 6px 12px;
   background-color: #0d6efd;
   color: white;
@@ -51,6 +53,8 @@
   border-radius: 6px;
   cursor: pointer;
 }
+
+
 
 .center-image {
   width: 30%;
@@ -88,4 +92,15 @@
 
 .next-button {
   background-color: #007bff;
+}
+.back-button {
+ padding: 10px 30px;
+  border: none;
+  background-color: red;
+ color: white;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+
+ 
 }
