@@ -19,8 +19,7 @@ import FullScorecard from './Components/Fullscorecard';
 
 
 function App() {
-  const [count, setCount] = useState(0)
-
+  
   return (
     <>
    <Navbar />

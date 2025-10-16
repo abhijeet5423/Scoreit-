@@ -9,7 +9,7 @@ const MatchSetup = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // team data coming from TeamSetup
+  // ✅ team data from TeamSetup page
   const teamData = location.state || {};
   const { teamAName = "Team A", teamBName = "Team B" } = teamData;
 
@@ -26,21 +26,23 @@ const MatchSetup = () => {
     tossDecision: "",
   });
 
+  // ✅ smart handleChange (auto clear umpire3 if umpire2 is empty)
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setMatchDetails((prev) => {
       let updated = { ...prev, [name]: value };
       if (name === "umpire2" && value.trim() === "") {
-        updated.umpire3 = ""; // auto-clear if umpire2 removed
+        updated.umpire3 = "";
       }
       return updated;
     });
   };
 
+  // ✅ save + merge team data
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // ✅ proper overs logic
     const oversValue =
       matchDetails.overs === "Custom"
         ? Number(matchDetails.customOvers)
@@ -60,7 +62,7 @@ const MatchSetup = () => {
       tossDecision: matchDetails.tossDecision,
     };
 
-    // ✅ merge team setup + match setup
+    // ✅ merge team + match setup
     const finalData = { ...teamData, ...matchData };
 
     try {
@@ -70,7 +72,7 @@ const MatchSetup = () => {
       );
       alert(res.data.message || "Match setup saved!");
 
-      // ✅ pass everything to ScoringPage
+      // ✅ pass data to Scoring Page
       navigate("/match", { state: finalData });
     } catch (error) {
       console.error("Error saving match setup:", error);
@@ -199,7 +201,7 @@ const MatchSetup = () => {
             )}
           </div>
 
-          {/* Toss Section */}
+          {/* Toss */}
           <div className="card">
             <h3>Toss</h3>
             <select
@@ -230,7 +232,7 @@ const MatchSetup = () => {
       </div>
 
       <button className="submit-btn" onClick={handleSubmit}>
-        Start Scoring
+        Start Match
       </button>
     </div>
   );
