@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Teamsetup.css";
 import centerImg from "../assets/b.png"; 
@@ -14,9 +14,26 @@ const TeamSetupPage = () => {
   const [teamAPlayers, setTeamAPlayers] = useState(Array(11).fill(""));
   const [teamBPlayers, setTeamBPlayers] = useState(Array(11).fill(""));
 
+  const [existingTeams, setExistingTeams] = useState([]);
+  const [selectedTeamA, setSelectedTeamA] = useState("");
+  const [selectedTeamB, setSelectedTeamB] = useState("");
+
   // Refs for Enter key navigation
   const teamARefs = useRef([]);
   const teamBRefs = useRef([]);
+
+  // Fetch existing teams on mount
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/team-save");
+        setExistingTeams(res.data);
+      } catch (err) {
+        console.error("Error fetching teams:", err);
+      }
+    };
+    fetchTeams();
+  }, []);
 
   const handleTeamAPlayerChange = (index, value) => {
     const updated = [...teamAPlayers];
@@ -39,6 +56,7 @@ const TeamSetupPage = () => {
     return duplicates.length > 0;
   };
 
+  // Save Teams
   const handleSaveTeamA = async () => {
     if (!teamAName) return alert("Please enter Team A name.");
     if (teamAPlayers.some((player) => !player)) return alert("Please fill all player names.");
@@ -50,6 +68,7 @@ const TeamSetupPage = () => {
         teamPlayers: teamAPlayers,
       });
       alert(res.data.message || "Team A saved successfully!");
+      setTeamSaveSuccess(true);
     } catch (err) {
       console.error(err);
       alert("Error saving team data.");
@@ -67,6 +86,7 @@ const TeamSetupPage = () => {
         teamPlayers: teamBPlayers,
       });
       alert(res.data.message || "Team B saved successfully!");
+      setTeamSaveSuccess(true);
     } catch (err) {
       console.error(err);
       alert("Error saving team data.");
@@ -110,6 +130,22 @@ const TeamSetupPage = () => {
     }
   };
 
+  // Load existing team into inputs
+  const handleAddExistingTeam = (teamType) => {
+    const selectedId = teamType === "A" ? selectedTeamA : selectedTeamB;
+    if (!selectedId) return alert("Please select a team first.");
+    const team = existingTeams.find((t) => t._id === selectedId);
+    if (!team) return alert("Team not found.");
+
+    if (teamType === "A") {
+      setTeamAName(team.teamName);
+      setTeamAPlayers(team.teamPlayers);
+    } else {
+      setTeamBName(team.teamName);
+      setTeamBPlayers(team.teamPlayers);
+    }
+  };
+
   return (
     <div className="team-setup-page">
       <h2>Team Setup</h2>
@@ -123,6 +159,23 @@ const TeamSetupPage = () => {
             value={teamAName}
             onChange={(e) => setTeamAName(e.target.value)}
           />
+
+          {/* Existing Teams Dropdown */}
+          <div className="existing-team-selector">
+            <select
+              value={selectedTeamA}
+              onChange={(e) => setSelectedTeamA(e.target.value)}
+            >
+              <option value="">Select Existing Team A</option>
+              {existingTeams.map((team) => (
+                <option key={team._id} value={team._id}>
+                  {team.teamName}
+                </option>
+              ))}
+            </select>
+            <button onClick={() => handleAddExistingTeam("A")}>Load Team A</button>
+          </div>
+
           <div className="players-section">
             <h4>Players</h4>
             {teamAPlayers.map((player, index) => (
@@ -155,6 +208,23 @@ const TeamSetupPage = () => {
             value={teamBName}
             onChange={(e) => setTeamBName(e.target.value)}
           />
+
+          {/* Existing Teams Dropdown */}
+          <div className="existing-team-selector">
+            <select
+              value={selectedTeamB}
+              onChange={(e) => setSelectedTeamB(e.target.value)}
+            >
+              <option value="">Select Existing Team B</option>
+              {existingTeams.map((team) => (
+                <option key={team._id} value={team._id}>
+                  {team.teamName}
+                </option>
+              ))}
+            </select>
+            <button onClick={() => handleAddExistingTeam("B")}>Load Team B</button>
+          </div>
+
           <div className="players-section">
             <h4>Players</h4>
             {teamBPlayers.map((player, index) => (

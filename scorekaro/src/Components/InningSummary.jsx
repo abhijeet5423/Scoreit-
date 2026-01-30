@@ -1,83 +1,124 @@
-import React, { useState } from "react";
+// src/components/InningSummary.jsx
+import React, { useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/InningSummary.css";
 
-const FullScorecard = () => {
-  const [expanded, setExpanded] = useState(false);
+export default function InningSummary() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const summaryRef = useRef(null);
 
-  // Dummy data (replace with backend API data)
-  const match = {
-    teamA: "Warriors",
-    teamB: "Titans",
-    venue: "Wankhede Stadium",
-    date: "August 2, 2025",
-    innings: [
-      {
-        battingTeam: "Warriors",
-        batting: [
-          { name: "Player A1", runs: 45, balls: 30 },
-          { name: "Player A2", runs: 33, balls: 27 },
-          { name: "Player A3", runs: 10, balls: 15 },
-        ],
-        bowling: [
-          { name: "Bowler B1", overs: 4, runs: 25, wickets: 2 },
-          { name: "Bowler B2", overs: 4, runs: 30, wickets: 1 },
-        ],
+  // Expected state passed from Match.jsx
+  const inningData = location.state;
+
+  useEffect(() => {
+    if (!inningData) {
+      navigate("/"); // redirect if no state
+    }
+  }, [inningData, navigate]);
+
+  if (!inningData) return null;
+
+  const {
+    currentBattingTeam,
+    currentBowlingTeam,
+    score,
+    wickets,
+    overs,
+    batsmen = [],
+    bowlers = [],
+    nextInningsNumber,
+    totalInnings,
+    matchId,
+    teamAName,
+    teamBName,
+    venueName,
+  } = inningData;
+
+  const handleNextInnings = () => {
+    // Prepare state for next innings
+    navigate("/test5", {
+      state: {
+        matchId,
+        teamAName,
+        teamBName,
+        venueName,
+        overs,
+        inningsNumber: nextInningsNumber,
+        totalInnings,
+        battingFirst: currentBowlingTeam, // other team bats now
+        bowlingFirst: currentBattingTeam,
+        teamAPlayers: teamAName === currentBattingTeam ? batsmen.map(b => b.name) : null,
+        teamBPlayers: teamBName === currentBattingTeam ? batsmen.map(b => b.name) : null,
       },
-      {
-        battingTeam: "Titans",
-        batting: [
-          { name: "Player B1", runs: 60, balls: 35 },
-          { name: "Player B2", runs: 20, balls: 18 },
-        ],
-        bowling: [
-          { name: "Bowler A1", overs: 4, runs: 35, wickets: 3 },
-          { name: "Bowler A2", overs: 3, runs: 22, wickets: 0 },
-        ],
-      },
-    ],
+    });
   };
 
   return (
-    <div className="full-scorecard">
-      <div className="match-summary">
-        <h2>{match.teamA} vs {match.teamB}</h2>
-        <p>{match.date} | {match.venue}</p>
-        <button onClick={() => setExpanded(!expanded)}>
-          {expanded ? "Hide Full Scorecard" : "View Full Scorecard"}
-        </button>
+    <div className="inning-summary-container" style={{ padding: "20px" }}>
+      <h2>Innings {nextInningsNumber - 1} Summary</h2>
+      <div ref={summaryRef} id="inning-summary" style={{ padding: "20px", background: "#fff", color: "#000" }}>
+        <h3>{currentBattingTeam} Innings</h3>
+        <p><strong>Score:</strong> {score}/{wickets} ({overs})</p>
+        <p><strong>Bowling Team:</strong> {currentBowlingTeam}</p>
+        <p><strong>Venue:</strong> {venueName}</p>
+
+        <hr />
+
+        <h4>Batting Stats</h4>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>Batsman</th>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>Runs</th>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>Balls</th>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>4s</th>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>6s</th>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>Out</th>
+            </tr>
+          </thead>
+          <tbody>
+            {batsmen.map((b, idx) => (
+              <tr key={idx}>
+                <td style={{ border: "1px solid #ddd", padding: "4px" }}>{b.name}</td>
+                <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "center" }}>{b.runs}</td>
+                <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "center" }}>{b.balls}</td>
+                <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "center" }}>{b.fours}</td>
+                <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "center" }}>{b.sixes}</td>
+                <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "center" }}>{b.out ? b.howOut : "Not Out"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h4 style={{ marginTop: "12px" }}>Bowling Stats</h4>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>Bowler</th>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>Overs</th>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>Runs</th>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>Wickets</th>
+              <th style={{ border: "1px solid #ddd", padding: "4px" }}>Maidens</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bowlers.map((b, idx) => (
+              <tr key={idx}>
+                <td style={{ border: "1px solid #ddd", padding: "4px" }}>{b.name}</td>
+                <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "center" }}>{Math.floor(b.balls / 6)}.{b.balls % 6}</td>
+                <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "center" }}>{b.runs}</td>
+                <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "center" }}>{b.wickets}</td>
+                <td style={{ border: "1px solid #ddd", padding: "4px", textAlign: "center" }}>{b.maidens || 0}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {expanded && (
-        <div className="innings-container">
-          {match.innings.map((inning, index) => (
-            <div className="inning-card" key={index}>
-              <h3>{inning.battingTeam} Innings</h3>
-
-              <div className="section">
-                <h4>Batting</h4>
-                {inning.batting.map((player, i) => (
-                  <p key={i}>
-                    {player.name} – {player.runs} ({player.balls} balls)
-                  </p>
-                ))}
-              </div>
-
-              <div className="section">
-                <h4>Bowling</h4>
-                {inning.bowling.map((bowler, i) => (
-                  <p key={i}>
-                    {bowler.name} – {bowler.overs} overs, {bowler.runs} runs, {bowler.wickets} wickets
-                  </p>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* TODO: Replace dummy data with backend API call */}
+      <button onClick={handleNextInnings} style={{ marginTop: "12px" }}>
+        Proceed to Next Innings
+      </button>
     </div>
   );
-};
-
-export default FullScorecard;
+}

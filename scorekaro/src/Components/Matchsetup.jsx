@@ -13,6 +13,7 @@ const MatchSetup = () => {
   const teamData = location.state || {};
   const { teamAName = "Team A", teamBName = "Team B" } = teamData;
 
+  // ✅ match details state
   const [matchDetails, setMatchDetails] = useState({
     overs: "",
     customOvers: "",
@@ -24,6 +25,8 @@ const MatchSetup = () => {
     matchType: "Day",
     tossWinner: "",
     tossDecision: "",
+    matchDate: "",
+    matchTime: "",
   });
 
   // ✅ smart handleChange (auto clear umpire3 if umpire2 is empty)
@@ -38,9 +41,15 @@ const MatchSetup = () => {
     });
   };
 
-  // ✅ save + merge team data
+  // ✅ submit logic
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // validate date/time
+    if (!matchDetails.matchDate || !matchDetails.matchTime) {
+      alert("Please select match date and time.");
+      return;
+    }
 
     // ✅ proper overs logic
     const oversValue =
@@ -60,6 +69,8 @@ const MatchSetup = () => {
       umpireName3: matchDetails.umpire3.trim(),
       tossWonBy: matchDetails.tossWinner,
       tossDecision: matchDetails.tossDecision,
+      matchDate: matchDetails.matchDate,
+      matchTime: matchDetails.matchTime,
     };
 
     // ✅ merge team + match setup
@@ -134,23 +145,27 @@ const MatchSetup = () => {
           </div>
 
           {/* Match Type */}
+           {/* Date & Time */}
           <div className="card">
-            <h3>Match Type</h3>
-            <div className="options">
-              {["Day", "Day-Night", "Night"].map((type) => (
-                <label key={type}>
-                  <input
-                    type="radio"
-                    name="matchType"
-                    value={type}
-                    checked={matchDetails.matchType === type}
-                    onChange={handleChange}
-                  />{" "}
-                  {type}
-                </label>
-              ))}
-            </div>
+            <h3>Match Schedule</h3>
+            <label>Date:</label>
+            <input
+              type="date"
+              name="matchDate"
+              value={matchDetails.matchDate}
+              onChange={handleChange}
+              required
+            />
+            <label>Time:</label>
+            <input
+              type="time"
+              name="matchTime"
+              value={matchDetails.matchTime}
+              onChange={handleChange}
+              required
+            />
           </div>
+         
         </div>
 
         {/* CENTER IMAGE */}
@@ -160,6 +175,8 @@ const MatchSetup = () => {
 
         {/* RIGHT COLUMN */}
         <div className="right-column">
+
+
           {/* Venue */}
           <div className="card">
             <h3>Venue</h3>
